@@ -164,16 +164,19 @@ def notes():
     if request.method == 'GET':
         return jsonify(notes), 200
     elif request.method == 'POST':
-        note_data = request.json
-        username = note_data.get('username')
-        # Check if user already posted a note within last 12 hours
-        if username in users and (time.time() - users[username]) < 43200:  # 43200 seconds = 12 hours
-            return jsonify({'error': 'You can only post one note every 12 hours.'}), 400
-        note_data['id'] = len(notes) + 1  # Example: Generate unique ID for note
-        notes.append(note_data)
-        users[username] = time.time()  # Update user's last note timestamp
-        socketio.emit('new_note', note_data)
-        return jsonify(note_data), 201
+        try:
+            note_data = request.json
+            username = note_data.get('username')
+            # Check if user already posted a note within last 12 hours
+            if username in users and (time.time() - users[username]) < 43200:  # 43200 seconds = 12 hours
+                return jsonify({'error': 'You can only post one note every 12 hours.'}), 400
+            note_data['id'] = len(notes) + 1  # Example: Generate unique ID for note
+            notes.append(note_data)
+            users[username] = time.time()  # Update user's last note timestamp
+            socketio.emit('new_note', note_data)
+            return jsonify(note_data), 201
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
 # Route to delete a note
 @app.route('/notes/<int:index>', methods=['DELETE'])
@@ -187,4 +190,4 @@ def delete_note(index):
 if __name__ == '__main__':
     app.config['SECRET_KEY'] = 'your_secret_key'  # Set a secret key for session management
     socketio.run(app, host='0.0.0.0', port=5000)
-        
+                                  
