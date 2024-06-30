@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, render_template_string
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 notes = []
 
@@ -37,8 +39,11 @@ def home():
         </form>
         <div id="notes-list"></div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const socket = io();
+
             const form = document.getElementById('note-form');
             const notesList = document.getElementById('notes-list');
 
@@ -87,6 +92,11 @@ def home():
                 }
             };
 
+            socket.on('new_note', (note) => {
+                fetchNotes();
+                alert(`New note added: ${note.title}`);
+            });
+
             fetchNotes();
         });
     </script>
@@ -102,6 +112,7 @@ def get_notes():
 def create_note():
     note = request.json
     notes.append(note)
+    socketio.emit('new_note', note)
     return jsonify(note), 201
 
 @app.route('/notes/<int:note_id>', methods=['GET'])
@@ -129,5 +140,5 @@ def delete_note(note_id):
         return jsonify({'error': 'Note not found'}), 404
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
-                                  
+    socketio.run(app, host='0.0.0.0', port=5000)
+           
