@@ -76,10 +76,17 @@ def home():
 
             // Fetch and display existing notes
             const fetchNotes = async () => {
-                const response = await fetch('/notes');
-                const notes = await response.json();
-                addMarkers(notes);
-                renderNotes(notes);
+                try {
+                    const response = await fetch('/notes');
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch notes');
+                    }
+                    const notes = await response.json();
+                    addMarkers(notes);
+                    renderNotes(notes);
+                } catch (error) {
+                    console.error('Error fetching notes:', error);
+                }
             };
 
             // Render notes list
